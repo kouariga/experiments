@@ -3,8 +3,8 @@
 from distutils.core import setup
 
 
-setup(name='dataset',
+setup(name='experiments',
       version='0.0.1',
-      packages=['dataset'],
+      packages=['experiments'],
       license='MIT License',
 )
