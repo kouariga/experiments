@@ -3,6 +3,7 @@ import datetime
 import glob
 import os
 import pdb
+import pickle
 import sys
 import shutil
 import time
@@ -15,14 +16,19 @@ from .dataset import Dataset
 
 class Experiment:
 
-    def __init__(self, config, lock=None):
+    def __init__(self, config, lock=None, **kwargs):
+
+        def set_attributes(kwargs):
+            for key, val in kwargs.items():
+                if isinstance(val, dict):
+                    set_attributes(val)
+                else:
+                    setattr(self, '_' + key, val)
+
         self._config = config
         self._lock = lock
         self._waittime = 10.0
-        self._ckpt_dir = None
-        self._log_dir = None
-        for key, val in config.items():
-            setattr(self, '_' + key, val)
+        set_attributes(config)
 
     def run(self):
         """Run experiment (wrapper)
@@ -30,7 +36,7 @@ class Experiment:
         try:
             self._main()
         except KeyboardInterrupt:
-            print("SIGINT was received. Stopping experiments...")
+            print("SIGINT was received. Aborting experiments...")
             self._clean()
         except Exception as ex:
             message = "An exception of type {0} occurred. Arguments:\n{1!r}"
@@ -52,26 +58,23 @@ class Experiment:
         """
         pass
 
-    def _load_datasets(self, model):
+    @abc.abstractmethod
+    def _train(self, *args, **kwargs):
+        """Train model
+        """
+        pass
+
+    def _load_dataset(self, model, data_dir, n_samples):
         """Load dataset
 
         Returns:
             datasets (tuple of Dataset): processed datasets
         """
-        datasets = [model.process_dataset(ds) for ds in self._datasets]
+        dataset = model.process_dataset(n_samples, data_dir=data_dir)
 
-        return datasets
+        return dataset
 
-    def _train(self, *args, **kwargs):
-        """Train model
-
-        Args:
-            model (SPN): Built model.
-            split_ds (dict of Dataset): key: dataset name, val: dataset.
-        """
-        pass
-
-    def _make_result_dirs(self, skip:bool=False):
+    def _make_result_dirs(self, skip=False):
         """Makes results directory which includes ckpts and log directory
 
         results -- ckpts  -- params:timestamp
@@ -84,10 +87,10 @@ class Experiment:
         """
         result_dirs = ['ckpts', 'logs']
 
-        params = ''
-        for key in sorted(self._config):
-            params = params + '_{}_{}'.format(key, self._config[key])
-
+        params = '{}_'.format(self._config['dataset'])
+        hyperparams = self._config['hyperparams']
+        params += '_'.join(['{}_{}'.format(key, hyperparams[key])
+                            for key in sorted(hyperparams)])
         tstamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
 
         path = os.path.join(self._results_dir, 'ckpts', params + ':*')
@@ -101,6 +104,23 @@ class Experiment:
             os.makedirs(dir_path)
 
         return tuple(dir_paths)
+
+    def _split_datasets(self, dataset, recipe):
+        """Split datasets
+
+        Args:
+            dataset (Dataset): dataset to split
+            recipe (dict): instruction for how to split
+        """
+        keys = list(recipe.keys())
+        vals = list(recipe.values())
+        datasets = dataset.split(vals)
+        split_datasets = dict(zip(keys, datasets))
+
+        with open(os.path.join(self._ckpt_dir, 'datasets.pkl'), 'wb') as f:
+            pickle.dump(split_datasets, f)
+
+        return split_datasets
 
     def _save_config(self):
         """Saves configuration file
