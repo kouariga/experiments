@@ -30,3 +30,13 @@ def jpt():
 def test_jpt2cpt(jpt):
     cpt = utils.jpt2cpt(jpt)
     print(np.exp(cpt))
+
+
+def test_entropy(jpt):
+    h = utils.entropy(jpt)
+    print(h)
+
+
+def test_weighted_entropy(jpt):
+    wh = utils.weighted_entropy(jpt)
+    print(wh)
