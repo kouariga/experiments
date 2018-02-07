@@ -30,12 +30,24 @@ class Dataset:
         Returns:
             datasets (tuple of Dataset): splitted datasets.
         """
-        assert np.sum(ratio) == 1
-        divs = [0] + [int(r*self.size) for r in np.cumsum(ratio)]
+        if isinstance(ratio[0], float):
+            if sum(ratio) != 1:
+                raise ValueError("ratio has to sum up to 1")
+            else:
+                divs = [0] + [int(r*self.size) for r in np.cumsum(ratio)]
+        elif isinstance(ratio[0], int):
+            if sum(ratio) > self._size:
+                raise ValueError("total cannot be larger than dataset size")
+            else:
+                divs = [0] + [r for r in np.cumsum(ratio)]
+        else:
+            raise ValueError("ratio type is neither float nor int")
+
         datasets = []
         for i in range(len(ratio)):
             datasets.append(Dataset(self.data[divs[i]:divs[i + 1]],
                                     self.labels[divs[i]:divs[i + 1]]))
+
         return datasets
 
     def shuffle(self, seed=0):
