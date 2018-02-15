@@ -4,18 +4,34 @@ import numpy as np
 
 class Dataset:
 
-    def __init__(self, data, labels):
+    def __init__(self, data, labels, info=None):
         self._data = data
         self._labels = labels
+        self._info = info
         self._size = self._data.shape[0]
 
     @property
     def data(self):
         return self._data
 
+    @data.setter
+    def labels(self, data):
+        self._data = data
+
     @property
     def labels(self):
         return self._labels
+
+    @labels.setter
+    def labels(self, labels):
+        self._labels = labels
+
+    @property
+    def info(self):
+        return self._info
+
+    @info.setter(self, info):
+        self._info = info
 
     @property
     def size(self):
