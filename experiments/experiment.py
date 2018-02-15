@@ -16,7 +16,7 @@ from .dataset import Dataset
 
 class Experiment:
 
-    def __init__(self, config, lock=None, **kwargs):
+    def __init__(self, config, lock=None):
 
         def set_attributes(kwargs):
             for key, val in kwargs.items():
@@ -27,7 +27,6 @@ class Experiment:
 
         self._config = config
         self._lock = lock
-        self._waittime = 10.0
         set_attributes(config)
 
     def run(self):
@@ -64,13 +63,13 @@ class Experiment:
         """
         pass
 
-    def _load_dataset(self, model, data_dir, n_samples):
+    def _load_dataset(self, model, data_dir, n_samples, **kwargs):
         """Load dataset
 
         Returns:
             datasets (tuple of Dataset): processed datasets
         """
-        dataset = model.process_dataset(n_samples, data_dir=data_dir)
+        dataset = model.process_dataset(n_samples, data_dir=data_dir, **kwargs)
 
         return dataset
 
@@ -101,7 +100,12 @@ class Experiment:
         dir_paths = [os.path.join(self._results_dir, d, dir_name)
                      for d in result_dirs]
         for dir_path in dir_paths:
-            os.makedirs(dir_path)
+            if self._lock:
+                with self._lock:
+                    if not os.path.exists(dir_path):
+                        os.makedirs(dir_path)
+            else:
+                os.makedirs(dir_path)
 
         return tuple(dir_paths)
 

@@ -30,7 +30,8 @@ class Dataset:
     def info(self):
         return self._info
 
-    @info.setter(self, info):
+    @info.setter
+    def info(self, info):
         self._info = info
 
     @property
