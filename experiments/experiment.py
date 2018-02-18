@@ -20,10 +20,7 @@ class Experiment:
 
         def set_attributes(kwargs):
             for key, val in kwargs.items():
-                if isinstance(val, dict):
-                    set_attributes(val)
-                else:
-                    setattr(self, '_' + key, val)
+                setattr(self, '_' + key, val)
 
         self._config = config
         self._lock = lock
@@ -63,15 +60,13 @@ class Experiment:
         """
         pass
 
-    def _load_dataset(self, model, data_dir, n_samples, **kwargs):
+    def _load_dataset(self, *args, **kwargs):
         """Load dataset
 
         Returns:
             datasets (tuple of Dataset): processed datasets
         """
-        dataset = model.process_dataset(n_samples, data_dir=data_dir, **kwargs)
-
-        return dataset
+        pass
 
     def _make_result_dirs(self, skip=False):
         """Makes results directory which includes ckpts and log directory
@@ -120,9 +115,6 @@ class Experiment:
         vals = list(recipe.values())
         datasets = dataset.split(vals)
         split_datasets = dict(zip(keys, datasets))
-
-        with open(os.path.join(self._ckpt_dir, 'datasets.pkl'), 'wb') as f:
-            pickle.dump(split_datasets, f)
 
         return split_datasets
 
