@@ -1,4 +1,6 @@
+import math
 import os
+
 import numpy as np
 
 
@@ -48,7 +50,7 @@ class Dataset:
             datasets (tuple of Dataset): splitted datasets.
         """
         if isinstance(ratio[0], float):
-            if sum(ratio) != 1:
+            if not math.isclose(sum(ratio), 1.0):
                 raise ValueError("ratio has to sum up to 1")
             else:
                 divs = [0] + [int(r*self.size) for r in np.cumsum(ratio)]
