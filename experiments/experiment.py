@@ -55,7 +55,7 @@ class Experiment:
         pass
 
     @abc.abstractmethod
-    def _train(self, *args, **kwargs):
+    def _train_model(self, *args, **kwargs):
         """Train model
         """
         pass

@@ -64,20 +64,59 @@ class Dataset:
 
         datasets = []
         for i in range(len(ratio)):
+            sub_info = self.info[divs[i]:divs[i + 1]] \
+                       if self.info is not None else None
             datasets.append(Dataset(self.data[divs[i]:divs[i + 1]],
-                                    self.labels[divs[i]:divs[i + 1]]))
-
+                                    self.labels[divs[i]:divs[i + 1]],
+                                    info=sub_info))
         return datasets
 
     def shuffle(self, seed=0):
         """Shuffle dataset.
 
         Returns:
-            shuffle (Dataset): Shuffled dataset
+            (Dataset): Shuffled dataset
         """
         np.random.seed(seed)
         p = np.random.permutation(self.size)
-        return Dataset(self.data[p], self.labels[p])
+        self._data = self._data[p]
+        self._labels = self._labels[p]
+        self._info = self._info[p] if self._info is not None else None
+
+    def pick(self, index):
+        """Pick subset of dataset
+        
+        Returns:
+            (Dataset): Subset of dataset
+        """
+        info = self.info[index] if self.info is not None else None
+        return Dataset(self.data[index], self.labels[index], info=info)
+
+    def filter(self, cond_func):
+        """Filter dataset by given condition `cond`.
+
+        Args:
+            cond (function): Take `info` and return bool
+        """
+        filt = {'data': [], 'labels': [], 'info': []}
+        comp = {'data': [], 'labels': [], 'info': []}
+
+        # Filter floors
+        for i, info in enumerate(self._info.ravel()):
+            if cond_func(info):
+                filt['data'].append(self._data[i])
+                filt['labels'].append(self._labels[i])
+                filt['info'].append(info)
+            else:
+                comp['data'].append(self._data[i])
+                comp['labels'].append(self._labels[i])
+                comp['info'].append(info)
+
+        # Format list as numpy array
+        filt_arr = {key: np.array(list_) for key, list_ in filt.items()}
+        comp_arr = {key: np.array(list_) for key, list_ in comp.items()}
+            
+        return (Dataset(**filt_arr), Dataset(**comp_arr))
 
     @staticmethod
     def load_dataset(data_path, labels_path):
