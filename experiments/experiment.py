@@ -69,17 +69,16 @@ class Experiment:
         pass
 
     def _make_result_dirs(self, skip=False):
-        """Makes results directory which includes ckpts and log directory
+        """Makes results directory which includes log directory
 
-        results -- ckpts  -- params:timestamp
-                 L log    -- params:timestamp
+        results --- log --- params:timestamp
         Args:
             skip (bool): If True, already trained parameters are skipped.
 
         Return:
-            results directory (tuple of str): (ckts dir, log dir)
+            results directory (tuple of str): (log dir)
         """
-        result_dirs = ['ckpts', 'logs']
+        result_dirs = ['logs']
 
         params = '{}_'.format(self._config['dataset'])
         hyperparams = self._config['hyperparams']
@@ -87,7 +86,7 @@ class Experiment:
                             for key in sorted(hyperparams)])
         tstamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
 
-        path = os.path.join(self._results_dir, 'ckpts', params + ':*')
+        path = os.path.join(self._results_dir, 'logs', params + ':*')
         if skip and (len(glob.glob(path)) > 0):
             return None
 
@@ -121,13 +120,11 @@ class Experiment:
     def _save_config(self):
         """Saves configuration file
         """
-        with open(os.path.join(self._ckpt_dir, 'config.yaml'), 'w') as f:
+        with open(os.path.join(self._log_dir, 'config.yaml'), 'w') as f:
             yaml.dump(self._config, f, default_flow_style=False)
 
     def _clean(self):
         """Clean up checkpoint and log directories
         """
-        if self._ckpt_dir:
-            shutil.rmtree(self._ckpt_dir)
         if self._log_dir:
             shutil.rmtree(self._log_dir)
