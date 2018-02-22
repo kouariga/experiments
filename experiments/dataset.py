@@ -102,8 +102,8 @@ class Dataset:
         comp = {'data': [], 'labels': [], 'info': []}
 
         # Filter floors
-        for i, info in enumerate(self._info.ravel()):
-            if cond_func(info):
+        for i, info in enumerate(self._info):
+            if cond_func(info[0]):
                 filt['data'].append(self._data[i])
                 filt['labels'].append(self._labels[i])
                 filt['info'].append(info)
@@ -117,6 +117,24 @@ class Dataset:
         comp_arr = {key: np.array(list_) for key, list_ in comp.items()}
             
         return (Dataset(**filt_arr), Dataset(**comp_arr))
+
+    def extend(self, dataset):
+        """extend self with another dataset
+        """
+        self._data = np.vstack([self._data, dataset.data])
+        self._labels = np.vstack([self._labels, dataset.labels])
+        if self._info is not None:
+            self._info = np.vstack([self._info, dataset.info])
+
+    @staticmethod
+    def join(datasets):
+        data = np.vstack([ds.data for ds in datasets])
+        labels = np.vstack([ds.labels for ds in datasets])
+        if datasets[0].info is not None:
+            info = np.vstack([ds.info for ds in datasets])
+        else:
+            info = None
+        return Dataset(data, labels, info)
 
     @staticmethod
     def load_dataset(data_path, labels_path):
