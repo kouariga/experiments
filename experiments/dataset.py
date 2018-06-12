@@ -58,12 +58,12 @@ class Dataset:
             if sum(ratio) > self._size:
                 raise ValueError("total cannot be larger than dataset size")
             else:
-                divs = [0] + [r for r in np.cumsum(ratio)]
+                divs = [0] + [r for r in np.cumsum(ratio)] + [self.size]
         else:
             raise ValueError("ratio type is neither float nor int")
 
         datasets = []
-        for i in range(len(ratio)):
+        for i in range(len(divs) - 1):
             sub_info = self.info[divs[i]:divs[i + 1]] \
                        if self.info is not None else None
             datasets.append(Dataset(self.data[divs[i]:divs[i + 1]],
@@ -91,6 +91,15 @@ class Dataset:
         """
         info = self.info[index] if self.info is not None else None
         return Dataset(self.data[index], self.labels[index], info=info)
+
+    def sample(self, n_samples):
+        """Sample `n_samples` samples from dataset
+
+        Returns:
+            (Dataset): Subset of dataset
+        """
+        index = np.random.choice(self.size, size=n_samples, replace=False)
+        return self.pick(index)
 
     def filter(self, cond_func):
         """Filter dataset by given condition `cond`.
@@ -129,7 +138,7 @@ class Dataset:
     @staticmethod
     def join(datasets):
         data = np.vstack([ds.data for ds in datasets])
-        labels = np.vstack([ds.labels for ds in datasets])
+        labels = np.concatenate([ds.labels for ds in datasets])
         if datasets[0].info is not None:
             info = np.vstack([ds.info for ds in datasets])
         else:
