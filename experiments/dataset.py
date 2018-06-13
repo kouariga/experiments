@@ -71,7 +71,7 @@ class Dataset:
                                     info=sub_info))
         return datasets
 
-    def shuffle(self, seed=0):
+    def shuffle(self, seed=None):
         """Shuffle dataset.
 
         Returns:
@@ -131,7 +131,7 @@ class Dataset:
         """extend self with another dataset
         """
         self._data = np.vstack([self._data, dataset.data])
-        self._labels = np.vstack([self._labels, dataset.labels])
+        self._labels = np.concatenate([self._labels, dataset.labels])
         if self._info is not None:
             self._info = np.vstack([self._info, dataset.info])
 
