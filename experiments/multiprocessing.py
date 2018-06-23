@@ -33,7 +33,7 @@ def worker(experiment, lock, gpus, config):
     gpus.put(gpu_id)
 
 
-def run(experiment, configs, gpus):
+def run_parallel(experiment, configs, gpus):
     """Runs with all combination of given parameters
     """
     man = multiprocessing.Manager()
