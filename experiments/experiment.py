@@ -54,68 +54,33 @@ class Experiment:
         """
         pass
 
-    @abc.abstractmethod
-    def _train_model(self, *args, **kwargs):
-        """Train model
-        """
-        pass
+    def _make_log_dir(self, skip=False):
+        """Make log directory
 
-    def _load_dataset(self, *args, **kwargs):
-        """Load dataset
+        experiment_root/logs/params:timestamp
 
-        Returns:
-            datasets (tuple of Dataset): processed datasets
-        """
-        pass
-
-    def _make_result_dirs(self, skip=False):
-        """Makes results directory which includes log directory
-
-        results --- log --- params:timestamp
         Args:
-            skip (bool): If True, already trained parameters are skipped.
-
+            skip (bool): already tried parameters are skipped
         Return:
-            results directory (tuple of str): (log dir)
+            log_dir_path (str): log directory, return None upon skip
         """
-        result_dirs = ['logs']
-
         params = '{}_'.format(self._config['dataset'])
         hyperparams = self._config['hyperparams']
         params += '_'.join(['{}_{}'.format(key, hyperparams[key])
                             for key in sorted(hyperparams)])
         tstamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+        logs_dir = os.path.join(self._root_dir, 'logs')
 
-        path = os.path.join(self._results_dir, 'logs', params + ':*')
-        if skip and (len(glob.glob(path)) > 0):
+        # Skip if params are already experimented
+        params_re = os.path.join(logs_dir, params + ':*')
+        if skip and (len(glob.glob(params_re)) > 0):
             return None
 
-        dir_name = '{}:{}'.format(params, tstamp)
-        dir_paths = [os.path.join(self._results_dir, d, dir_name)
-                     for d in result_dirs]
-        for dir_path in dir_paths:
-            if self._lock:
-                with self._lock:
-                    if not os.path.exists(dir_path):
-                        os.makedirs(dir_path)
-            else:
-                os.makedirs(dir_path)
+        log_dir_name = '{}:{}'.format(params, tstamp)
+        log_dir_path = os.path.join(logs_dir, log_dir_name)
+        os.makedirs(log_dir_path)
 
-        return tuple(dir_paths)
-
-    def _split_datasets(self, dataset, recipe):
-        """Split datasets
-
-        Args:
-            dataset (Dataset): dataset to split
-            recipe (dict): instruction for how to split
-        """
-        keys = list(recipe.keys())
-        vals = list(recipe.values())
-        datasets = dataset.split(vals)
-        split_datasets = dict(zip(keys, datasets))
-
-        return split_datasets
+        return log_dir_path
 
     def _save_config(self):
         """Saves configuration file
