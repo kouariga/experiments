@@ -18,13 +18,23 @@ class Experiment:
 
     def __init__(self, config, lock=None):
 
-        def set_attributes(kwargs):
-            for key, val in kwargs.items():
-                setattr(self, '_' + key, val)
+    @classmethod
+    def run_all(cls):
+        """Parse command line arguments and run experiment with multi-processes
+        """
+        parser = argparse.ArgumentParser()
+        parser.add_argument('config', type=str,
+                            help='configuration file (*.yaml)')
+        parser.add_argument('--gpus', type=int, nargs='+', default=[0],
+                            help='available gpu ids like 0 2 3')
+        parser.add_argument('--rounds', type=int, default=1,
+                            help='number of experiments for each configuration')
+        args = parser.parse_args()
 
-        self._config = config
-        self._lock = lock
-        set_attributes(config)
+        config = yaml.load(open(args.config))
+        configs = args.rounds*cartesian(config)
+
+        run_parallel(cls, configs, args.gpus)
 
     def run(self):
         """Run experiment (wrapper)
