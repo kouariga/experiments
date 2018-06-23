@@ -1,4 +1,5 @@
 import abc
+import argparse
 import datetime
 import glob
 import os
@@ -12,11 +13,17 @@ import traceback
 import yaml
 
 from .dataset import Dataset
+from .multiprocessing import cartesian, run_parallel
 
 
 class Experiment:
 
-    def __init__(self, config, lock=None):
+    def __init__(self, config, skip=False):
+        """Initialize Experiment
+        """
+        self._config = config
+        for key, val in config.items():
+            setattr(self, '_' + key, val)
 
     @classmethod
     def run_all(cls):
@@ -37,7 +44,7 @@ class Experiment:
         run_parallel(cls, configs, args.gpus)
 
     def run(self):
-        """Run experiment (wrapper)
+        """Wrapper for _main to handle the top level exceptions
         """
         try:
             self._main()
@@ -54,13 +61,7 @@ class Experiment:
 
     @abc.abstractmethod
     def _main(self):
-        """Run experiment (main)
-        """
-        pass
-
-    @abc.abstractmethod
-    def _generate_model(self):
-        """Generate model
+        """Run experiment which is implemented by the inheritor
         """
         pass
 
@@ -93,13 +94,13 @@ class Experiment:
         return log_dir_path
 
     def _save_config(self):
-        """Saves configuration file
+        """Save configuration file in the log directory
         """
         with open(os.path.join(self._log_dir, 'config.yaml'), 'w') as f:
             yaml.dump(self._config, f, default_flow_style=False)
 
     def _clean(self):
-        """Clean up checkpoint and log directories
+        """Clean up log directory when experiment was aborted by an exception
         """
         if self._log_dir:
             shutil.rmtree(self._log_dir)
