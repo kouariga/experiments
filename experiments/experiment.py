@@ -34,12 +34,12 @@ class Experiment:
                             help='configuration file (*.yaml)')
         parser.add_argument('--gpus', type=int, nargs='+', default=[0],
                             help='available gpu ids like 0 2 3')
-        parser.add_argument('--rounds', type=int, default=1,
+        parser.add_argument('--runs', type=int, default=1,
                             help='number of experiments for each configuration')
         args = parser.parse_args()
 
         config = yaml.load(open(args.config))
-        configs = args.rounds*cartesian(config)
+        configs = args.runs*cartesian(config)
 
         run_parallel(cls, configs, args.gpus)
 
