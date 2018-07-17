@@ -23,27 +23,37 @@ def cartesian(dict_):
     return [dict(l) for l in itertools.product(*to_product)]
 
 
-def worker(experiment, lock, gpus, config):
-    """Runs experiment process
+def gpu_worker(experiment, lock, gpus, config):
+    """Runs experiment process with a GPU
     """
     gpu_id = gpus.get()
     os.putenv("CUDA_VISIBLE_DEVICES", str(gpu_id))
-    exp = experiment(config, lock=lock)
-    exp.run()
+    cpu_worker(experiment, lock, config)
     gpus.put(gpu_id)
 
 
-def run_parallel(experiment, configs, gpus):
+def cpu_worker(experiment, lock, config):
+    """Runs experiment process with a CPU
+    """
+    exp = experiment(config, lock=lock)
+    exp.run()
+
+
+def run_parallel(experiment, configs, gpus=None, cpus=None):
     """Runs with all combination of given parameters
     """
     man = multiprocessing.Manager()
-    q = man.Queue()
     l = man.Lock()
-    for i in gpus:
-        q.put(i)
-    func = functools.partial(worker, experiment, l, q)
+    if gpus:
+        q = man.Queue()
+        for i in gpus:
+            q.put(i)
+        func = functools.partial(gpu_worker, experiment, l, q)
+        pool = multiprocessing.Pool(processes=len(gpus))
+    else:
+        func = functools.partial(cpu_worker, experiment, l)
+        pool = multiprocessing.Pool(processes=len(cpus))
 
-    pool = multiprocessing.Pool(processes=len(gpus))
     for _ in tqdm.tqdm(pool.imap_unordered(func, configs), total=len(configs)):
         pass
 
