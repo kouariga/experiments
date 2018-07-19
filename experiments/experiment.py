@@ -18,7 +18,7 @@ from .multiprocessing import cartesian, run_parallel
 
 class Experiment:
 
-    def __init__(self, config, skip=False):
+    def __init__(self, config):
         """Initialize Experiment
         """
         self._config = config
@@ -32,9 +32,9 @@ class Experiment:
         parser = argparse.ArgumentParser()
         parser.add_argument('config', type=str,
                             help='configuration file (*.yaml)')
-        parser.add_argument('--gpus', type=int, nargs='+', default=[0],
+        parser.add_argument('--gpus', type=int, nargs='+',
                             help='available gpu ids')
-        parser.add_argument('--cpus', type=int, nargs='+', default=12,
+        parser.add_argument('--n_cpus', type=int,
                             help='available number of cpus')
         parser.add_argument('--runs', type=int, default=1,
                             help='number of experiments for each configuration')
@@ -45,11 +45,11 @@ class Experiment:
 
         if args.gpus:
             run_parallel(cls, configs, gpus=args.gpus)
-        elif args.cpus:
-            run_parallel(cls, configs, cpus=args.cpus)
+        elif args.n_cpus:
+            run_parallel(cls, configs, n_cpus=args.n_cpus)
         else:
             sys.exit("Specify either the number of CPUs or ids of GPUs like "
-                     + "--cpus 12 or --gpus 0 2 3")
+                     + "--n_cpus 12 or --gpus 0 2 3")
 
     def run(self):
         """Wrapper for _main to handle the top level exceptions

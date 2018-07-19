@@ -39,7 +39,7 @@ def cpu_worker(experiment, lock, config):
     exp.run()
 
 
-def run_parallel(experiment, configs, gpus=None, cpus=None):
+def run_parallel(experiment, configs, gpus=None, n_cpus=None):
     """Runs with all combination of given parameters
     """
     man = multiprocessing.Manager()
@@ -52,7 +52,7 @@ def run_parallel(experiment, configs, gpus=None, cpus=None):
         pool = multiprocessing.Pool(processes=len(gpus))
     else:
         func = functools.partial(cpu_worker, experiment, l)
-        pool = multiprocessing.Pool(processes=len(cpus))
+        pool = multiprocessing.Pool(processes=n_cpus)
 
     for _ in tqdm.tqdm(pool.imap_unordered(func, configs), total=len(configs)):
         pass
