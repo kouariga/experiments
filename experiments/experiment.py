@@ -34,7 +34,7 @@ class Experiment:
                             help='configuration file (*.yaml)')
         parser.add_argument('--gpus', type=int, nargs='+',
                             help='available gpu ids')
-        parser.add_argument('--n_cpus', type=int,
+        parser.add_argument('--ncpus', type=int,
                             help='available number of cpus')
         parser.add_argument('--runs', type=int, default=1,
                             help='number of experiments for each configuration')
@@ -45,11 +45,11 @@ class Experiment:
 
         if args.gpus:
             run_parallel(cls, configs, gpus=args.gpus)
-        elif args.n_cpus:
-            run_parallel(cls, configs, n_cpus=args.n_cpus)
+        elif args.ncpus:
+            run_parallel(cls, configs, ncpus=args.ncpus)
         else:
             sys.exit("Specify either the number of CPUs or ids of GPUs like "
-                     + "--n_cpus 12 or --gpus 0 2 3")
+                     + "--ncpus 12 or --gpus 0 2 3")
 
     def run(self):
         """Wrapper for _main to handle the top level exceptions
