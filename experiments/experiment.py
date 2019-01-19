@@ -8,6 +8,7 @@ import sys
 import shutil
 import traceback
 
+from pathlib import Path
 import yaml
 
 from .multiprocessing import cartesian, run_parallel
@@ -31,7 +32,7 @@ class Experiment:
                             help='configuration file (*.yaml)')
         parser.add_argument('--gpus', type=int, nargs='+',
                             help='available gpu ids')
-        parser.add_argument('--ncpus', type=int,
+        parser.add_argument('--ncpus', type=int, default=1,
                             help='available number of cpus')
         parser.add_argument('--runs', type=int, default=1,
                             help='number of runs for each configuration')
@@ -44,15 +45,13 @@ class Experiment:
             run_parallel(cls, configs, gpus=args.gpus)
         elif args.ncpus:
             run_parallel(cls, configs, ncpus=args.ncpus)
-        else:
-            sys.exit("Specify either the number of CPUs or ids of GPUs like "
-                     + "--ncpus 12 or --gpus 0 2 3")
 
     def run(self):
         """Wrapper for _main to handle the top level exceptions
         """
         try:
-            self._main()
+            self._make_log_dir()
+            self.main()
         except KeyboardInterrupt:
             print("SIGINT was received. Aborting experiments...")
             self._clean()
@@ -65,44 +64,32 @@ class Experiment:
             self._clean()
 
     @abc.abstractmethod
-    def _main(self):
+    def main(self):
         """Run experiment which is implemented by the inheritor
         """
         pass
 
-    def _make_log_dir(self, skip=False):
+    def _make_log_dir(self):
         """Make log directory
 
-        experiment_root/logs/params:timestamp
-
-        Args:
-            skip (bool): already tried parameters are skipped
-        Return:
-            log_dir_path (str): log directory, return None upon skip
+        root/logs/params:timestamp
         """
-        params = '{}_'.format(self._config['dataset'])
-        hyperparams = self._config['hyperparams']
-        params += '_'.join(['{}_{}'.format(key, hyperparams[key])
-                            for key in sorted(hyperparams)])
         tstamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-        logs_dir = os.path.join(self._root_dir, 'logs')
+        hyperparams = self._config['hyperparams']
+        params = '-'.join(['{}:{}'.format(key, hyperparams[key])
+                           for key in sorted(hyperparams)])
 
-        # Skip if params are already experimented
-        params_re = os.path.join(logs_dir, params + ':*')
-        if skip and (len(glob.glob(params_re)) > 0):
-            return None
-
-        log_dir_name = '{}:{}'.format(params, tstamp)
-        log_dir_path = os.path.join(logs_dir, log_dir_name)
+        log_dir = '{}-{}'.format(tstamp, params)
+        log_dir_path = Path(self._root_dir).joinpath('logs', log_dir)
         os.makedirs(log_dir_path)
-
-        return log_dir_path
+        self._log_dir = log_dir_path
 
     def _save_config(self):
         """Save configuration file in the log directory
         """
-        with open(os.path.join(self._log_dir, 'config.yaml'), 'w') as f:
-            yaml.dump(self._config, f, default_flow_style=False)
+        if self._log_dir:
+            with open(os.path.join(self._log_dir, 'config.yaml'), 'w') as f:
+                yaml.dump(self._config, f, default_flow_style=False)
 
     def _clean(self):
         """Clean up log directory when experiment was aborted by an exception

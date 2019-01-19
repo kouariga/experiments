@@ -39,15 +39,15 @@ def run_parallel(experiment, configs, gpus=None, ncpus=None):
     """Runs with all combination of given parameters
     """
     man = multiprocessing.Manager()
-    l = man.Lock()
+    lock = man.Lock()
     if gpus:
-        q = man.Queue()
+        queue = man.Queue()
         for i in gpus:
-            q.put(i)
-        func = functools.partial(gpu_worker, experiment, l, q)
+            queue.put(i)
+        func = functools.partial(gpu_worker, experiment, lock, queue)
         pool = multiprocessing.Pool(processes=len(gpus))
     else:
-        func = functools.partial(cpu_worker, experiment, l)
+        func = functools.partial(cpu_worker, experiment, lock)
         pool = multiprocessing.Pool(processes=ncpus)
 
     for _ in tqdm.tqdm(pool.imap_unordered(func, configs), total=len(configs)):
