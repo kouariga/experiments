@@ -1,12 +1,8 @@
-import argparse
 import functools
 import itertools
 import multiprocessing
 import os
-import random
 import tqdm
-
-import yaml
 
 
 def cartesian(dict_):

@@ -4,15 +4,12 @@ import datetime
 import glob
 import os
 import pdb
-import pickle
 import sys
 import shutil
-import time
 import traceback
 
 import yaml
 
-from .dataset import Dataset
 from .multiprocessing import cartesian, run_parallel
 
 
@@ -37,7 +34,7 @@ class Experiment:
         parser.add_argument('--ncpus', type=int,
                             help='available number of cpus')
         parser.add_argument('--runs', type=int, default=1,
-                            help='number of experiments for each configuration')
+                            help='number of runs for each configuration')
         args = parser.parse_args()
 
         config = yaml.load(open(args.config))
