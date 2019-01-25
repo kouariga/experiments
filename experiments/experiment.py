@@ -1,7 +1,7 @@
 import abc
 import argparse
 import datetime
-import glob
+import json
 import os
 import pdb
 import sys
@@ -75,10 +75,9 @@ class Experiment:
         root/logs/params:timestamp
         """
         tstamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-        hyperparams = self._config['hyperparams']
-        params = '-'.join(['{}:{}'.format(key, hyperparams[key])
-                           for key in sorted(hyperparams)])
-
+        params = json.dumps(self._config['hyperparams'],
+                            sort_keys=True,
+                            separators=(',', ':'))
         log_dir = '{}-{}'.format(tstamp, params)
         log_dir_path = Path(self._root_dir).joinpath('logs', log_dir)
         os.makedirs(log_dir_path)
