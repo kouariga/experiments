@@ -8,6 +8,7 @@ import sys
 import shutil
 import traceback
 
+import numpy as np
 from pathlib import Path
 import yaml
 
@@ -51,6 +52,7 @@ class Experiment:
         """
         try:
             self._make_log_dir()
+            self._save_config()
             self.main()
         except KeyboardInterrupt:
             print("SIGINT was received. Aborting experiments...")
@@ -87,8 +89,21 @@ class Experiment:
         """Save configuration file in the log directory
         """
         if self._log_dir:
-            with open(os.path.join(self._log_dir, 'config.yaml'), 'w') as f:
+            path = Path(self._log_dir).joinpath('config.yaml')
+            with path.open('w') as f:
                 yaml.dump(self._config, f, default_flow_style=False)
+
+    def _save_npfile(self, file_, arr):
+        """Save numpy files such as predicted labels
+
+        Parameters
+        ----------
+        file_ : base file name
+        arr : array-like
+        """
+        if self._log_dir:
+            path = Path(self._log_dir).joinpath(file_)
+            np.save(path, arr)
 
     def _clean(self):
         """Clean up log directory when experiment was aborted by an exception
