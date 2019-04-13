@@ -2,6 +2,7 @@ import abc
 import argparse
 import datetime
 import json
+from logging import basicConfig, getLogger, INFO
 import os
 import pdb
 import sys
@@ -14,14 +15,20 @@ import yaml
 
 from .multiprocessing import cartesian, run_parallel
 
+logger = getLogger(__name__)
+basicConfig(level=INFO)
+
 
 class Experiment:
 
-    def __init__(self, config):
+    def __init__(self, config, lock):
         """Initialize Experiment
         """
         self._config = config
+        self._lock = lock
         for key, val in config.items():
+            setattr(self, '_' + key, val)
+        for key, val in config['hyperparams'].items():
             setattr(self, '_' + key, val)
 
     @classmethod
@@ -39,7 +46,7 @@ class Experiment:
                             help='number of runs for each configuration')
         args = parser.parse_args()
 
-        config = yaml.load(open(args.config))
+        config = yaml.load(open(args.config), Loader=yaml.FullLoader)
         configs = args.runs*cartesian(config)
 
         if args.gpus:
@@ -55,11 +62,11 @@ class Experiment:
             self._save_config()
             self.main()
         except KeyboardInterrupt:
-            print("SIGINT was received. Aborting experiments...")
+            logger.exception("SIGINT was received. Aborting experiments...")
             self._clean()
         except Exception as ex:
             message = "An exception of type {0} occurred. Arguments:\n{1!r}"
-            print(message.format(type(ex).__name__, ex.args))
+            logger.exception(message.format(type(ex).__name__, ex.args))
             _, _, tb = sys.exc_info()
             traceback.format_exc()
             pdb.post_mortem(tb)
