@@ -23,6 +23,7 @@ class Experiment:
         self._config = config
         for key, val in config.items():
             setattr(self, '_' + key, val)
+        self._file_counter = {}
 
     @classmethod
     def run_all(cls):
@@ -93,16 +94,22 @@ class Experiment:
             with path.open('w') as f:
                 yaml.dump(self._config, f, default_flow_style=False)
 
-    def _save_npfile(self, file_, arr):
+    def _save_npfile(self, file_, arr, auto_count=True, count=None):
         """Save numpy files such as predicted labels
 
         Parameters
         ----------
         file_ : base file name
         arr : array-like
+        auto_count : boolean
+        count : int
         """
         if self._log_dir:
-            path = Path(self._log_dir).joinpath(file_)
+            file_ = file_.replace('.npy', '')
+            if auto_count:
+                count = self._file_counter.get(file_, 0)
+            self._file_counter[file_] = count + 1
+            path = Path(self._log_dir).joinpath(f"{file_}_{count}")
             np.save(path, arr)
 
     def _clean(self):
